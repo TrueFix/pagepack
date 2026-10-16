@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["./frontend/src/*"] }, "jsx": "react-jsx" },
+  "include": ["frontend/src", "vite.config.js"]
+}
