@@ -13,6 +13,7 @@ import (
 
 	"github.com/TrueFix/pagepack/pkg/humanize"
 	"github.com/TrueFix/pagepack/pkg/logx"
+	"github.com/TrueFix/pagepack/pkg/version"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/valkey-io/valkey-go"
@@ -83,6 +84,7 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 func (s *Server) publicConfig(w http.ResponseWriter, r *http.Request) {
 	respond(w, http.StatusOK, map[string]any{
 		"api_version":          apiVersion,
+		"version":              version.Version,
 		"max_website_bytes":    s.config.MaxWebsiteBytes,
 		"max_website_size":     humanize.Bytes(s.config.MaxWebsiteBytes),
 		"max_concurrent_jobs":  s.config.MaxConcurrentJobs,
@@ -111,6 +113,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	respond(w, code, map[string]any{
 		"status":         status,
 		"api_version":    apiVersion,
+		"version":        version.Version,
 		"uptime_seconds": int64(uptime.Seconds()),
 		"uptime":         logx.Duration(uptime),
 		"workers":        map[string]int{"busy": busy, "available": cap(s.slots) - busy, "capacity": cap(s.slots)},

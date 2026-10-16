@@ -17,6 +17,7 @@ import (
 
 	"github.com/TrueFix/pagepack/pkg/config"
 	"github.com/TrueFix/pagepack/pkg/storage"
+	"github.com/TrueFix/pagepack/pkg/version"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -238,7 +239,10 @@ func TestErrorsForMissingJobsAndRoutes(t *testing.T) {
 func TestPublicConfigAndHealth(t *testing.T) {
 	s := &Server{config: config.Config{MaxWebsiteBytes: 1234, ValkeyURL: "secret", S3Bucket: "private"}, state: &memoryState{}, slots: make(chan struct{}, 4), log: quietLogger(), started: time.Now()}
 	s.slots <- struct{}{}
-	w, _ := call(t, s, http.MethodGet, "/api/v1/config", "")
+	w, public := call(t, s, http.MethodGet, "/api/v1/config", "")
+	if public["version"] != version.Version {
+		t.Fatalf("config release version: %v", public["version"])
+	}
 	if !strings.Contains(w.Body.String(), "1234") || strings.Contains(w.Body.String(), "secret") || strings.Contains(w.Body.String(), "private") {
 		t.Fatalf("response: %s", w.Body.String())
 	}
@@ -246,6 +250,9 @@ func TestPublicConfigAndHealth(t *testing.T) {
 		t.Fatal("legacy config route differs")
 	}
 	w, data := call(t, s, http.MethodGet, "/api/v1/health", "")
+	if data["version"] != version.Version {
+		t.Fatalf("health release version: %v", data["version"])
+	}
 	workers := data["workers"].(map[string]any)
 	if w.Code != 200 || workers["busy"] != 1.0 || workers["available"] != 3.0 {
 		t.Fatalf("health: %s", w.Body.String())

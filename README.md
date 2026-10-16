@@ -2,6 +2,8 @@
 
 **Pack a website. Keep a copy.**
 
+Current release: **v1.0.0** · [Changelog](CHANGELOG.md)
+
 A Go website archiver with Gorilla Mux, Valkey job state, S3-compatible ZIP storage,
 and a React frontend built with Vite. Clones static pages and assets with GNU wget.
 
@@ -24,6 +26,60 @@ Open http://localhost:8000. All application settings are loaded and validated in
 `pkg/config/config.go`. Pagepack automatically loads `.env` from the working directory;
 exported environment variables take precedence. `.env.example` lists settings without
 credentials, and `.env` is ignored by Git.
+
+## Docker Compose
+
+Requires Docker Engine and the Compose plugin. Configure an existing S3-compatible
+bucket and its credentials in `.env`, then run:
+
+```sh
+cp .env.example .env
+# Edit AWS_BUCKET, AWS_REGION, credentials, and optional AWS_ENDPOINT in .env.
+docker compose up --build -d
+docker compose logs -f pagepack
+```
+
+Open http://localhost:8000. Compose starts Pagepack and its own Valkey instance.
+The image builds the frontend and embeds it into the Go binary; Node and Go are
+not needed on the host. The runtime includes GNU wget and CA certificates and runs
+as a non-root user. No S3 server or bucket is provisioned by Compose.
+
+Compose overrides `HTTP_ADDR`, `VALKEY_URL`, and `TEMP_DIR` for container networking
+and storage. `pagepack_tmp` stores scratch downloads at `/var/lib/pagepack/tmp`;
+`valkey_data` persists job state. Other settings come from `.env`. Set
+`PAGEPACK_PORT=8080` in `.env` to change the published port. For a remote S3-compatible
+provider, use an endpoint reachable both by the container and by users downloading
+the presigned URL; `localhost` inside the container refers to the container itself.
+
+```sh
+docker compose down       # stop services; named volumes are retained
+docker compose config --quiet
+```
+
+To place downloads on a particular host disk, replace the `pagepack_tmp` mount with
+an absolute bind mount such as `/srv/pagepack/tmp:/var/lib/pagepack/tmp`. Create the
+host directory and make it writable by container UID/GID `10001:10001` first.
+
+For an image without Compose:
+
+```sh
+docker build -t pagepack:1.0.0 .
+docker run --rm pagepack:1.0.0 --version
+docker run -d --name pagepack --env-file .env \
+  -e HTTP_ADDR=0.0.0.0:8000 -e TEMP_DIR=/var/lib/pagepack/tmp \
+  -p 8000:8000 -v pagepack_tmp:/var/lib/pagepack/tmp pagepack:1.0.0
+```
+
+The standalone image needs a container-reachable `VALKEY_URL` as well as S3 settings.
+
+## Versioning
+
+Application releases use semantic version tags, starting with `v1.0.0`. The source
+version lives in `pkg/version/version.go` and is reported by `pagepack --version`,
+startup logs, and the config/health endpoints. API version `v1` is separate from the
+application release version. See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
+## Configuration
 
 | Environment variable | Default | Purpose |
 | --- | --- | --- |

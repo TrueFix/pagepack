@@ -1,0 +1,37 @@
+services:
+  pagepack:
+    image: pagepack:1.0.0
+    build:
+      context: .
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 45s
+    env_file:
+      - .env
+    environment:
+      HTTP_ADDR: 0.0.0.0:8000
+      VALKEY_URL: valkey://valkey:6379/0
+      TEMP_DIR: /var/lib/pagepack/tmp
+    ports:
+      - "${PAGEPACK_PORT:-8000}:8000"
+    volumes:
+      - pagepack_tmp:/var/lib/pagepack/tmp
+    depends_on:
+      valkey:
+        condition: service_healthy
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pagepack_tmp:
+  valkey_data:

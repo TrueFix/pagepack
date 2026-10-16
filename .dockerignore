@@ -1,0 +1,15 @@
+.git
+.github
+node_modules
+dist
+.env
+.env.*
+tmp
+pagepack
+web-cloner
+*.zip
+*.bin
+*.log
+*.test
+.preview-*.png
+.shot-*.png

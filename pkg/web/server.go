@@ -20,6 +20,7 @@ import (
 	"github.com/TrueFix/pagepack/pkg/config"
 	"github.com/TrueFix/pagepack/pkg/humanize"
 	"github.com/TrueFix/pagepack/pkg/storage"
+	"github.com/TrueFix/pagepack/pkg/version"
 	"github.com/gorilla/mux"
 	"github.com/valkey-io/valkey-go"
 )
@@ -78,7 +79,7 @@ func StartServer(c config.Config, frontend fs.FS, log *slog.Logger) error {
 	if log == nil {
 		log = slog.Default()
 	}
-	log.Info("pagepack starting", "go", runtime.Version(), "pid", os.Getpid())
+	log.Info("pagepack starting", "version", version.Version, "go", runtime.Version(), "pid", os.Getpid())
 	wgetPath, err := exec.LookPath(c.WgetPath)
 	if err != nil {
 		return fmt.Errorf("wget unavailable: %w", err)
